@@ -1,113 +1,219 @@
-# Web Template Engine - Neutral TS
+# Neutral TS: The Comprehensive Guide to the Language-Agnostic Web Template Engine
 
-## Overview
+## Table of Contents
 
-Neutral Template System is a safe, modular, language-agnostic template engine built in Rust. It can be used as a native Rust library or via IPC for other languages (Python, PHP, Node.js, Go). Templates can be reused across multiple languages with consistent results.
-
----
-
-## Architecture
-
-### Integration Approaches
-
-- **Rust**: Native library (crate) or IPC client + IPC server
-- **Python**: Native package or IPC client + IPC server
-- **Other languages** (PHP, Node.js, Go): IPC client + IPC server required
-
-### Client-Server Model (IPC)
-
-The architecture follows a database-like client-server paradigm. Just like a database where different programming languages access data through a client and get identical results, Neutral TS has an IPC server where each programming language has a client. No matter where you run the template, the result will always be the same.
-
-### BIF-Based Block Structure
-
-The main element of Neutral TS is the **BIF (Built-in Function)**, which is the equivalent of functions and displays an output; the output is always a string or nothing (empty string).
-
-Neutral TS is based on BIFs with block structure. We call the set of nested BIFs of the same level a **block**. By design, all BIFs can be nested and there can be a BIF anywhere in another BIF except in the name.
-
-**Block Structure Visualization:**
-```
-              .-- {:coalesce;
-              |       {:code;
-              |           {:code; ... :}
-              |           {:code; ... :}
-    Block --> |           {:code; ... :}
-              |       :}
-              |       {:code;
-              |           {:code; ... :}
-              |       :}
-              `-- :}
-
-                  {:coalesce;
-              .------ {:code;
-              |           {:code; ... :}
-    Block --> |           {:code; ... :}
-              |           {:code; ... :}
-              `------ :}
-              .------ {:code;
-    Block --> |           {:code; ... :}
-              `------ :}
-                  :}
-```
-
-### Data Scope Architecture
-
-There are **global data** and keys available to the entire template, and **local data** and keys available in each block. "Local" information must be preceded by `local::`. Some keys are always "local" such as "snippets", "locale", and others.
+1. [Introduction](#introduction)
+2. [What is Neutral TS?](#what-is-neutral-ts)
+3. [Core Philosophy and Design Principles](#core-philosophy-and-design-principles)
+4. [Architecture Overview](#architecture-overview)
+5. [Installation and Setup](#installation-and-setup)
+6. [BIFs: The Building Blocks of Neutral TS](#bifs-the-building-blocks)
+7. [Template Syntax Deep Dive](#template-syntax-deep-dive)
+8. [The Schema System](#the-schema-system)
+9. [IPC Architecture](#ipc-architecture)
+10. [Security Features](#security-features)
+11. [Internationalization and Localization](#internationalization-and-localization)
+12. [Caching Mechanisms](#caching-mechanisms)
+13. [Working with Data](#working-with-data)
+14. [Advanced Features](#advanced-features)
+15. [Integration with Multiple Languages](#integration-with-multiple-languages)
+16. [Best Practices](#best-practices)
+17. [Performance Considerations](#performance-considerations)
+18. [Comparison with Other Template Engines](#comparison-with-other-template-engines)
+19. [Real-World Use Cases](#real-world-use-cases)
+20. [Future Directions](#future-directions)
+21. [Conclusion](#conclusion)
 
 ---
 
-## Template File Example
+## Introduction
 
+In the ever-evolving landscape of web development, template engines have become indispensable tools for generating dynamic content. From simple variable interpolation to complex conditional rendering and iteration, template engines bridge the gap between raw data and polished HTML output. However, one persistent challenge has plagued developers across the industry: the fragmentation of template solutions across different programming languages and frameworks.
+
+Enter **Neutral TS**, a revolutionary template engine that dares to ask a fundamental question: *What if you could write a template once and use it everywhere, regardless of the programming language your backend employs?*
+
+Neutral TS is a template engine for the Web, designed to work with any programming language (language-agnostic) via IPC/Package and natively as library/crate in Rust. This groundbreaking approach addresses a long-standing pain point in software development, where teams often find themselves maintaining multiple template implementations across different services written in various languages.
+
+This comprehensive guide will explore every facet of Neutral TS, from its foundational principles to advanced usage patterns, providing developers with the knowledge needed to leverage this powerful tool in their projects.
+
+---
+
+## What is Neutral TS?
+
+Neutral TS is a safe, modular, language-agnostic template engine built in Rust. It works as a native Rust library or via IPC for other languages like Python and PHP. With Neutral TS you can reuse the same template across multiple languages with consistent results.
+
+At its core, Neutral TS represents a paradigm shift in how we think about template engines. Traditional template engines are tightly coupled to their host programming language—Jinja2 is for Python, Blade is for PHP, ERB is for Ruby, and so on. While this tight integration offers certain conveniences, it also creates silos that can complicate multi-language architectures and make template reuse virtually impossible across language boundaries.
+
+Similarly, Neutral TS has an IPC server, and each programming language has a client. No matter where you run the template, the result will always be the same. Thanks to this, and to its modular and parameterizable design, it is possible to create utilities or plugins that will work everywhere.
+
+### The Name: Why "Neutral"?
+
+The name "Neutral" perfectly encapsulates the engine's philosophy. It doesn't favor any particular programming language or platform. It maintains neutrality by providing consistent output regardless of the calling environment. This neutrality extends to:
+
+- **Language neutrality**: Works with Rust, Python, PHP, Node.js, Go, and potentially any language capable of TCP/IP communication
+- **Platform neutrality**: Runs on Linux, Windows, macOS, and other operating systems
+- **Framework neutrality**: Not tied to any specific web framework
+
+### Key Characteristics
+
+Other key features include: Safe Language-agnostic Modular Parameterizable How It Works Neutral TS integrates with other programming languages in two main ways: In Rust: You can use Neutral TS as a library by downloading the crate.
+
+The engine distinguishes itself through several key characteristics:
+
+1. **Safety First**: Built in Rust, one of the safest systems programming languages available
+2. **Language Agnostic**: True cross-language compatibility through IPC
+3. **Modular Architecture**: Components can be used independently
+4. **Parameterizable Design**: Highly configurable to meet various needs
+5. **Consistent Output**: Identical templates produce identical results across all supported languages
+
+---
+
+## Core Philosophy and Design Principles
+
+### The Database Analogy
+
+One of the most illuminating ways to understand Neutral TS's architecture is through the database analogy provided by its creators:
+
+Imagine a database. It has a server, and different programming languages access the data through a client. This means that if you run a "SELECT ..." query from any programming language, the result will always be the same.
+
+Just as a database server provides consistent data access regardless of whether you're querying from Python, Java, or Ruby, Neutral TS provides consistent template rendering regardless of your backend language. Just like an SQL query returns the same data from any language, a Neutral TS template returns the same HTML from Python, PHP, Rust… with added security isolation.
+
+### Design by Convention
+
+Neutral TS employs several design principles that make templates predictable and secure:
+
+By design the templates do not have access to arbitrary application data, the data has to be passed to the template in a JSON, then the data that you have not included in the JSON cannot be read by the template.
+
+This explicit data passing mechanism serves multiple purposes:
+
+1. **Security**: Templates cannot access data they shouldn't have
+2. **Predictability**: What you pass is what you get
+3. **Portability**: The JSON schema is universally readable across languages
+4. **Documentation**: The schema serves as implicit documentation of template requirements
+
+### Modularity at Every Level
+
+Thanks to this, and to its modular and parameterizable design, it is possible to create utilities or plugins that will work everywhere. For example, you can develop tools to create forms or form fields and create your own libraries of "snippets" for repetitive tasks.
+
+Modularity permeates every aspect of Neutral TS:
+
+- **Snippets**: Reusable template fragments
+- **Schemas**: Composable configuration objects
+- **BIFs**: Independent, nestable built-in functions
+- **Caching**: Granular cache control at any level
+
+---
+
+## Architecture Overview
+
+### Two Modes of Operation
+
+Neutral TS operates in two distinct modes, each suited to different use cases:
+
+#### 1. Native Rust Library Mode
+
+In Rust: You can use Neutral TS template engine as a library by downloading the crate.
+
+When used directly in Rust applications, Neutral TS operates as a native library without any IPC overhead. This mode offers:
+
+- Maximum performance
+- Direct memory access
+- Zero network latency
+- Simplified deployment (no separate server process)
+
+#### 2. IPC Mode (Cross-Language)
+
+In other programming languages: Inter-Process Communication (IPC) is necessary, similar to how databases like MariaDB work.
+
+For non-Rust languages, Neutral TS uses a client-server architecture:
+
+IPC Server: Universal standalone application (written in Rust) for all languages - download from: IPC Server · IPC Clients: Language-specific libraries to include in your project - available at: IPC Clients
+
+### IPC Server Architecture
+
+Neutral TS IPC Server for template rendering, a TCP/IP interface for Neutral TS template engine.
+
+The IPC server is a standalone Rust application that:
+
+- Listens for template rendering requests over TCP/IP
+- Processes requests using the Neutral TS engine
+- Returns rendered output to clients
+- Manages caching and resource allocation
+
+### Client Libraries
+
+Examples for Rust, Python, PHP, Node.js and Go here: download.
+
+Each supported language has its own client library that:
+
+- Handles TCP/IP communication with the server
+- Marshals data into the required JSON format
+- Provides a language-idiomatic API
+- Handles error responses gracefully
+
+---
+
+## Installation and Setup
+
+### Installing the Rust Crate
+
+For Rust developers, installation is straightforward through Cargo:
+
+```toml
+[dependencies]
+neutralts = "1.3.0"
 ```
-{:*
-   comment
-*:}
-{:locale; locale.json :}
-{:data; local-data.json :}
-{:include; theme-snippets.ntpl :}
-<!DOCTYPE html>
-<html lang="{:lang;:}">
-    <head>
-        <title>{:trans; Site title :}</title>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        {:snippet; current-theme:head :}
-        <link rel="stylesheet" href="bootstrap.min.css">
-    </head>
-    <body class="{:;body-class:}">
-        {:snippet; current-theme:body_begin  :}
-        {:snippet; current-theme:body-content :}
-        {:snippet; current-theme:body-footer  :}
-        <script src="jquery.min.js"></script>
-    </body>
-</html>
+
+### Setting Up the IPC Server
+
+For non-Rust languages, you'll need to download and run the IPC server:
+
+IPC Server: Universal standalone application (written in Rust) for all languages - download from: IPC Server
+
+The IPC server can be downloaded from the official releases page and run as a standalone application or as a system service.
+
+### Installing Language-Specific Clients
+
+#### Python
+
+The Python client is available on PyPI as `neutraltemplate`. Installation:
+
+```bash
+pip install neutraltemplate
+```
+
+#### PHP, Node.js, and Go
+
+Client libraries for these languages are available through their respective package managers or as direct downloads from the IPC Clients repository.
+
+### Basic Configuration
+
+Configuration in Neutral TS is handled through a JSON schema. Here's a minimal configuration:
+
+```json
+{
+  "config": {
+    "comments": "remove",
+    "cache_disable": false
+  },
+  "data": {
+    "title": "My Page"
+  }
+}
 ```
 
 ---
 
-## Syntax
+## BIFs: The Building Blocks of Neutral TS
 
-### BIF (Built-in Function) Structure
+### Understanding BIFs
 
-The BIF structure follows this pattern:
+The main element of Neutral TS is the BIF (Build-in function), would be the equivalent of functions and would display an output, the output is always a string or nothing (empty string).
 
-```
-{:[modifiers]name; [flags] params >> code :}
-```
+BIFs (Built-in Functions) are the fundamental building blocks of Neutral TS templates. They encapsulate all template logic, from simple variable display to complex conditional rendering and iteration.
 
-Structure breakdown:
-```
-{:[modifiers]name; [flags] params >> code :}
- │             │ │        │       │   │   │
- │             │ │        │       │   │   └─ Close BIF
- │             │ │        │       │   └─ Code block
- │             │ │        │       └─ Params/Code separator
- │             │ │        └─ Parameters
- │             │ └─ Name separator
- │             └─ BIF name
- └─ Open BIF
-```
+### BIF Syntax Structure
 
-Visual representation:
 ```
     .-- open bif
     |   .-- bif name
@@ -127,688 +233,647 @@ Visual representation:
               `-- Built-in function
 ```
 
-### Modifiers
-
-Modifiers are symbols placed immediately after the opening `{:` and before the BIF name. They alter the behavior of the BIF.
-
-| Modifier | Symbol | Description |
-|----------|--------|-------------|
-| Upline | `^` | Eliminates previous whitespace |
-| Not | `!` | Negates condition or changes behavior |
-| Scope | `+` | Adds scope to current level |
-| Filter | `&` | Escapes HTML special characters |
-
-Modifiers can be combined: `{:^!defined; varname >> ... :}`
-
-Examples:
-```
-{:+coalesce; varname >> ... :}   # with modifier "+" (scope)
-{:^coalesce; varname >> ... :}   # with modifier "^" (upline)
-{:!array; ... :}                 # with modifier "!" (negation)
-{:&;varname:}                    # with modifier "&" (filter/escape)
-{:^!defined; varname >> ... :}   # combined modifiers
-```
-
-### Data Display
-
-Data is defined in JSON format and displayed using the `{:; ... :}` BIF (the variable BIF):
-
-**JSON Data Definition:**
-```json
-"data": {
-    "true": true,
-    "false": false,
-    "hello": "hello",
-    "zero": "0",
-    "one": "1",
-    "spaces": "   ",
-    "empty": "",
-    "null": null,
-    "array": {
-        "hello": "hello",
-        "one": "1"
-    }
-}
-```
-
-**Template Usage:**
-```
-{:;hello:}           <!-- outputs: hello -->
-{:;array->hello:}    <!-- outputs: hello -->
-{:;array->one:}      <!-- outputs: 1 -->
-```
-
-### Variable Access Patterns
-
-#### Simple Variables (`schema.data` - Immutable)
-```
-{:;varname:}                    # Simple variable
-{:;array->key:}                 # Array/object access
-{:;array->{:;key:}:}            # Dynamic evaluation
-{:;deep->nested->value:}        # Deep nesting access
-```
-
-#### Local Variables (`schema.inherit.data` - Mutable)
-```
-{:;local::varname:}             # Simple local variable
-{:;local::array->key:}          # Local array/object access
-{:;local::array->{:;key:}:}     # Local dynamic evaluation
-```
-
-#### Variable Output Modifiers
-```
-{:;varname:}      # Output variable (standard)
-{:^;varname:}     # Output without preceding whitespace
-{:&;varname:}     # Output with HTML escaping
-{:!;varname:}     # Output without filtering
-```
-
-### Conditional BIFs
-
-Neutral TS provides several conditional BIFs to control content display based on variable states:
-
-#### Defined / Not Defined
-Checks if a variable exists in the schema:
-```
-{:defined; varname >> this shown if varname is defined :}
-{:!defined; varname >> this shown if varname is not defined :}
-```
-
-#### Filled / Not Filled
-Checks if a variable has content (non-empty):
-```
-{:filled; varname >> this shown if varname has content :}
-{:!filled; varname >> this shown if varname is empty :}
-```
-
-#### Bool
-Checks if a variable evaluates to true/false:
-```
-{:bool; varname >> this shown if varname is true :}
-{:!bool; varname >> this shown if varname is false :}
-```
-
-#### Array
-Checks if a variable is an array or object:
-```
-{:array; varname >> this shown if varname is array :}
-{:!array; varname >> this shown if varname is not array :}
-```
-
-Note: There is no distinction between objects and arrays in Neutral TS.
-
-#### Same / Not Same
-String comparison:
-```
-{:same; /a/b/ >> this shown if a equals b :}
-{:!same; /a/b/ >> this shown if a not equals b :}
-
-{:same; /{:;var1:}/{:;var2:}/ >> variables are equal :}
-```
-
-#### Contains / Not Contains
-Substring checking:
-```
-{:contains; /haystack/needle/ >> shown if haystack contains needle :}
-{:!contains; /haystack/needle/ >> shown if haystack does not contain needle :}
-
-{:contains; /{:;text:}/search/ >> found! :}
-```
-
-### Short Circuit Evaluation
-
-Neutral TS implements short circuit evaluation at block level. If a condition is not met, the code after `>>` is not evaluated:
+The general syntax for a BIF is:
 
 ```
-{:defined; varname >> {:code; {:code; expensive operation :} :} :}
+{:bifname; params >> code :}
 ```
 
-If `varname` is not defined, the nested code blocks are never processed, improving performance.
+Where:
+- `{:` opens the BIF
+- `bifname` is the function name
+- `;` separates the name from parameters
+- `params` are the function parameters
+- `>>` separates parameters from the code block
+- `code` is the template content
+- `:}` closes the BIF
 
-### Coalesce
+### Block Structure and Nesting
 
-Outputs the first non-empty (non-zero length) result from a block list. Nothing is displayed if all blocks are empty:
+Neutral TS template engine is based on BIFs with block structure, we call the set of nested BIFs of the same level a block
+
+By design all Bifs can be nested and there can be a Bif anywhere in another Bif except in the name.
+
+This nesting capability is crucial for building complex templates:
 
 ```
 {:coalesce;
-    {:;varname1:}
-    {:;varname2:}
-    {:;varname3:}
-    {:code; default value :}
+  {:code;
+    {:filled; user >>
+      Welcome, {:;user->name:}!
+    :}
+  :}
+  {:code;
+    Welcome, Guest!
+  :}
 :}
 ```
 
-This is useful for providing fallback values:
+### Short-Circuit Evaluation
+
+Short circuit at block level, if varname is not defined, the following '>>' is not evaluated: 
+```
+{:defined; varname >> 
+    {:code; {:code; ... :} :} 
+:}
+```
+
+This short-circuit behavior is crucial for performance and safety—expensive operations inside a BIF's code block aren't evaluated if the condition fails.
+
+### Core BIF Categories
+
+#### 1. Variable Display
+
+The simplest BIF displays variable values:
+
+```
+{:;variablename:}
+{:;user->profile->name:}
+```
+
+The arrow syntax (`->`) navigates nested JSON structures.
+
+#### 2. Conditional BIFs
+
+**filled**: Outputs code if a variable has a non-empty value
+```
+{:filled; varname >> Hello! :}
+```
+
+**defined**: Checks if a variable exists
+```
+{:defined; varname >> Variable exists :}
+```
+
+**array**: Checks if a variable is an array/object
+{:array; variable >> code :} {:array; varname >> this shown if varname is array :} Note that there is no distinction between objects and arrays.
+
+#### 3. Iteration BIFs
+
+**each**: Iterates over arrays
+{:^each; {:param; array-name :} key value >> {:array; value >> {:;:} {:;key:}: {:snippet; iterate-array-next-level :} :}{:else; {:;:} {:;key:}={:;value:} :} :}
+
+#### 4. Control Flow BIFs
+
+**else**: Provides fallback content
+{:else; code :} {:;varname:}{:else; shown if varname is empty :}
+
+**coalesce**: Returns the first non-empty block
 ```
 {:coalesce;
-    {:;user->nickname:}
-    {:;user->name:}
-    {:code; Anonymous :}
+  {:code; {:;primary:} :}
+  {:code; {:;secondary:} :}
+  {:code; Default :}
 :}
 ```
 
-### Else Block
+#### 5. Snippets
 
-The `else` BIF evaluates whether the **previous expression produces an empty block**, not the Boolean expression itself:
+Snippets are reusable template fragments:
 
 ```
-{:;varname:}{:else; shown if varname is empty :}
-
-{:filled; varname >> content :}{:else; alternative content :}
-
-{:snippet; optional-snippet :}{:else; {:snippet; default-snippet :} :}
-```
-
-### Snippets
-
-Snippets are reusable template fragments that can be defined and called multiple times. Calling a snippet that does not exist is not an error; it returns an empty string.
-
-#### Defining Snippets
-```
-{:snippet; snippet-name >> 
-    <div class="card">
-        <h2>{:;title:}</h2>
-        <p>{:;content:}</p>
-    </div>
+{:snippet; header >> 
+  <header>
+    <h1>{:;site->name:}</h1>
+  </header>
 :}
+
+{:snippet; header :}
 ```
 
-#### Using Snippets
-```
-{:snippet; snippet-name :}
-```
+"Calling a snippet that does not exist is not an error, it will result in a empty string that we can evaluate with else. {:snippet; option-{:;varname:} :} {:else; {:snippet; option-default :} :}"
 
-#### Dynamic Snippet Selection
-```
-{:snippet; option-{:;varname:} :}
-{:else; {:snippet; option-default :} :}
-```
+#### 6. BIF Negation and Modifiers
 
-#### Alias
-```
-{:snip; name >> content :}    # Same as {:snippet; ... :}
-```
+BIFs can be modified with prefixes:
+{:!array; ... :} {:+array; ... :} {:^array; ...
 
-### Code Block
+- `!` - Negation (NOT)
+- `+` - Additional modifier
+- `^` - Special behavior modifier
 
-The `code` BIF creates a code block for grouping content:
+---
 
-```
-{:code; content :}                           # Basic code block
-{:code; {:flg; safe :} >> content :}         # Safe mode (no parsing)
-{:code; {:flg; noparse :} >> content :}      # No parsing
-{:code; {:flg; encode_tags :} >> content :}  # Encode HTML tags
-```
-
-### Include
-
-Include external template files:
-
-```
-{:include; file.ntpl :}                      # Include template
-{:include; {:flg; require :} >> file.ntpl :} # Required include (error if missing)
-{:include; {:flg; noparse :} >> file.css :}  # Include without parsing
-{:include; {:flg; safe :} >> file.txt :}     # Safe include
-{:include; #/relative/path.ntpl :}           # Relative to current file
-{:include; header-{:;theme:}.ntpl :}         # Dynamic include (partial)
-{:include; {:;varname:} :}                   # Full dynamic - Get error requires allow
-```
-
-### Iteration
-
-#### Each Loop
-Iterates over arrays/objects:
-```
-{:each; array key value >>
-    <li>{:;key:}: {:;value:}</li>
-:}
-```
-
-With nested data:
-```
-{:each; users index user >>
-    <div class="user">
-        <span>{:;index:}</span>
-        <span>{:;user->name:}</span>
-        <span>{:;user->email:}</span>
-    </div>
-:}
-```
-
-#### For Loop
-Numeric iteration:
-```
-{:for; var 1..10 >>
-    <span>{:;var:}</span>
-:}
-```
-
-### Parameters
-
-Parameters allow passing values within code blocks:
-
-```
-{:code;
-    {:param; name >> value :}     # Set parameter
-    {:param; name :}              # Get parameter
-    
-    {:param; title >> Welcome :}
-    <h1>{:param; title :}</h1>
-:}
-```
-
-### Evaluation
-
-The `eval` BIF evaluates content and makes it available via `__eval__`:
-
-```
-{:eval; {:;varname:} >>
-    Content if not empty: {:;__eval__:}
-:}
-```
+## Template Syntax Deep Dive
 
 ### Comments
 
-Comments are removed from the output:
+Neutral TS supports comments that can be configured to be removed from output:
 
 ```
-{:* single line comment *:}
-
-{:*
-    multi-line
-    comment
-*:}
-
-{:; varname {:* inline comment *:} :}
+{:* This is a comment *:}
 ```
 
-### Unprintable
-
-The unprintable BIF `{:;:}` outputs an empty string:
-
+The behavior is controlled by the config:
+```json
+{
+  "config": {
+    "comments": "remove"
+  }
+}
 ```
-{:;:}     # Outputs empty string, preserves surrounding whitespace
-{:^;:}    # Outputs empty string, eliminates previous whitespace
+
+### Flexible Delimiters
+
+"Any delimiter can be used, but a delimiter is always required, even if only one parameter is used. {:fetch; \"url\" >> ... :} {:fetch; ~url~event~ >> ... :} {:fetch; #url#event# >> ... :} {:fetch; |url|event| >> ... :} {:fetch; 'url'event' >> ... :}"
+
+"The reason you can use different delimiters is to use one that does not appear in the parameter, using / would cause problems with the url so we use \" or any other"
+
+This flexibility prevents escaping nightmares when parameters contain the delimiter character.
+
+### The Fetch BIF
+
+"Neutral TS template engine provides a basic JavaScript to perform simple fetch requests"
+
+{:fetch; |url|event|wrapperId|class|id|name| >> code :} Code is the html that will be displayed before performing the fetch, it can be a message, a button or the fields of a form.
+
+Example:
+```html
+{:fetch; "/api/user-data" >> 
+  <div>Loading user data...</div>
+:}
+```
+
+### Status Code Handling
+
+"If you use the bif \"exit\" or \"redirect\" it is necessary to manage the status codes in the application... let status_code = template.get_status_code(); // e.g.: 500... let status_text = template.get_status_text(); // e.g.: Internal Server Error... let status_param = template.get_status_param(); // e.g.: template error x"
+
+Templates can control HTTP responses:
+
+```rust
+let template = Template::from_file_value("file.ntpl", schema).unwrap();
+let content = template.render();
+let status_code = template.get_status_code();
+let status_text = template.get_status_text();
+let status_param = template.get_status_param();
 ```
 
 ---
 
-## Schema Structure
+## The Schema System
+
+### Schema Structure
+
+The schema is a JSON where we define the data that will represent the templates, as well as the configuration and translations, although you can render a template without schema since Neutral TS provides one by default, it will be of little use since it has no data.
+
+A complete schema has several sections:
 
 ```json
 {
-    "config": {
-        "comments": "remove",
-        "cache_prefix": "neutral-cache",
-        "cache_dir": "",
-        "cache_on_post": false,
-        "cache_on_get": true,
-        "cache_on_cookies": true,
-        "cache_disable": false,
-        "filter_all": false,
-        "disable_js": false,
-        "debug_expire": 3600,
-        "debug_file": ""
-    },
-    "inherit": {
-        "locale": {
-            "current": "en",
-            "trans": {
-                "en": {
-                    "Hello": "Hello"
-                },
-                "es": {
-                    "Hello": "Hola"
-                }
-            }
-        },
-        "data": {
-            "my_var": "value"
-        }
-    },
-    "data": {
-        "CONTEXT": {
-            "ROUTE": "",
-            "HOST": "",
-            "GET": {},
-            "POST": {},
-            "HEADERS": {},
-            "FILES": {},
-            "COOKIES": {},
-            "SESSION": {},
-            "ENV": {}
-        },
-        "my_var": "value",
-        "my_obj": {
-            "key": "value"
-        }
+  "config": { ... },
+  "inherit": { ... },
+  "locale": { ... },
+  "data": { ... }
+}
+```
+
+### Configuration Section
+
+"You need two things, a template file and a json schema: { \"config\": { \"comments\": \"remove\", \"cache_prefix\": \"neutral-cache\", \"cache_dir\": \"\", \"cache_on_post\": false, \"cache_on_get\": true, \"cache_on_cookies\": true, \"cache_disable\": false, \"filter_all\": false, \"disable_js\": false }"
+
+Configuration options include:
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `comments` | How to handle comments ("remove", "keep") | "remove" |
+| `cache_prefix` | Prefix for cache files | "neutral-cache" |
+| `cache_dir` | Directory for cache storage | "" |
+| `cache_on_post` | Cache POST requests | false |
+| `cache_on_get` | Cache GET requests | true |
+| `cache_on_cookies` | Cache when cookies present | true |
+| `cache_disable` | Disable caching entirely | false |
+| `filter_all` | Apply filters to all output | false |
+| `disable_js` | Disable JavaScript generation | false |
+
+### The CONTEXT Object
+
+The schema includes a special CONTEXT object for web request data:
+
+```json
+{
+  "data": {
+    "CONTEXT": {
+      "ROUTE": "/users/profile",
+      "HOST": "example.com",
+      "GET": { "id": "123" },
+      "POST": {},
+      "HEADERS": {},
+      "FILES": {},
+      "COOKIES": {},
+      "SESSION": {},
+      "ENV": {}
     }
+  }
+}
+```
+
+This standardized structure ensures consistent access to request data across all languages.
+
+### Data Section
+
+The data section contains all variables available to templates:
+
+```json
+{
+  "data": {
+    "site_name": "MySite",
+    "site": {
+      "name": "MySite",
+      "url": "https://mysite.com"
+    },
+    "user": {
+      "name": "John",
+      "email": "john@example.com"
+    }
+  }
 }
 ```
 
 ---
 
-## Safety Features
+## IPC Architecture
 
-### Context Variables
+### Why IPC?
 
-User-provided data should be placed in `CONTEXT`:
+It works as a native Rust library or via IPC for other languages like Python and PHP.
+
+Inter-Process Communication enables Neutral TS to serve as a universal template engine while maintaining its Rust-based core for performance and safety.
+
+### Architecture Benefits
+
+"The IPC architecture provides important security benefits: Sandboxed execution: Templates run in isolated processes · Reduced attack surface: Main application protected from template engine vulnerabilities... Crash containment: Template engine failures don't affect the main application · Zero-downtime updates: IPC server can be updated independently without restarting client applications"
+
+The IPC approach offers significant advantages:
+
+1. **Sandboxed Execution**: Templates run in isolated processes
+2. **Reduced Attack Surface**: Main application protected from template engine vulnerabilities
+3. **Resource Control**: Memory and CPU limits can be enforced at server level
+4. **Crash Containment**: Template engine failures don't affect the main application
+5. **Zero-Downtime Updates**: IPC server can be updated independently without restarting client applications
+
+### Performance Considerations
+
+The IPC approach introduces performance overhead due to inter-process communication. The impact varies depending on: ... For most web applications, the security and interoperability benefits compensate for the performance overhead.
+
+Factors affecting IPC performance:
+
+- Network latency (mitigated by local socket communication)
+- Serialization/deserialization overhead
+- Template complexity
+- Caching effectiveness
+
+For performance-critical applications, consider:
+- Running the IPC server on the same machine
+- Using Unix domain sockets instead of TCP where possible
+- Aggressive caching strategies
+- Connection pooling in client libraries
+
+### Easy Updates
+
+"Easy updates: No application recompilation needed - simply update the IPC server for engine improvements"
+
+This decoupled architecture means template engine updates don't require redeploying your entire application stack.
+
+---
+
+## Security Features
+
+### Explicit Data Passing
+
+By design the templates do not have access to arbitrary application data, the data has to be passed to the template in a JSON, then the data that you have not included in the JSON cannot be read by the template.
+
+This is perhaps the most fundamental security feature. Unlike some template engines that have access to the entire application context, Neutral TS requires explicit data passing. This means:
+
+- No accidental exposure of sensitive data
+- Clear audit trail of what data templates can access
+- Easier security reviews
+
+### Process Isolation
+
+"The IPC architecture provides important security benefits: Sandboxed execution: Templates run in isolated processes · Reduced attack surface: Main application protected from template engine vulnerabilities · Resource control: Memory and CPU limits can be enforced at server level · Crash containment: Template engine failures don't affect the main application"
+
+When using IPC mode, templates run in a completely separate process:
+
+- Memory isolation prevents data leaks
+- CPU limits prevent denial-of-service
+- Crashes are contained to the template server
+
+### Built in Rust
+
+Neutral TS is built in Rust, which provides:
+
+- Memory safety without garbage collection
+- No buffer overflows
+- No null pointer dereferences
+- Thread safety guarantees
+
+### Allow Lists and Restrictions
+
+Declare supports wildcards, see bif "declare" for details. ... {:allow; templates >> file.txt :}{:else; fails :}
+
+The `allow` BIF enables whitelisting:
+
+```
+{:allow; templates >> file.ntpl :}{:else; File not allowed :}
+{:allow; languages >> es-ES :}{:else; Language not supported :}
+```
+
+---
+
+## Internationalization and Localization
+
+### Translation System
+
+"Neutral TS template engine provides powerful and easy-to-use translation utilities… define the translation in a JSON"
+
+Neutral TS has built-in support for multilingual content. Translations are defined in the schema:
 
 ```json
 {
-    "data": {
-        "CONTEXT": {
-            "GET": {},
-            "POST": {},
-            "COOKIES": {},
-            "ENV": {}
-        }
+  "locale": {
+    "current": "en",
+    "trans": {
+      "en": {
+        "Hello": "Hello",
+        "Welcome": "Welcome"
+      },
+      "es": {
+        "Hello": "Hola",
+        "Welcome": "Bienvenido"
+      },
+      "de": {
+        "Hello": "Hallo",
+        "Welcome": "Willkommen"
+      },
+      "fr": {
+        "Hello": "Bonjour",
+        "Welcome": "Bienvenue"
+      }
     }
+  }
 }
 ```
 
-All `CONTEXT` variables are automatically HTML-escaped.
+### Using Translations in Templates
 
-### Security
-
-- Variables are **not evaluated** (template injection safe)
-- Complete variable evaluation requires `{:allow; ... :}`
-- Partial evaluation allowed: `{:; array->{:;key:} :}`
-- Templates cannot access data not in schema
-- `CONTEXT` vars auto-escaped. `filter_all: true` escapes everything
-- By design, templates do not have access to arbitrary application data; data must be passed in JSON
-
-### File Security
+The `trans` BIF handles translations:
 
 ```
-# Error - insecure:
-{:include; {:;varname:} :}
+{:trans; Hello :}
+```
 
-# Secure - with allow:
-{:declare; valid-files >>
-    home.ntpl
-    login.ntpl
+This outputs:
+- "Hello" when current locale is "en"
+- "Hola" when current locale is "es"
+- "Hallo" when current locale is "de"
+- "Bonjour" when current locale is "fr"
+
+### Reference-Based Translations
+
+For longer translation keys, you can use references:
+
+```json
+{
+  "trans": {
+    "en": {
+      "ref:greeting-nts": "Hello and welcome to our site!"
+    },
+    "es": {
+      "ref:greeting-nts": "¡Hola y bienvenido a nuestro sitio!"
+    }
+  }
+}
+```
+
+```
+{:trans; ref:greeting-nts :}
+```
+
+### Fallback Behavior
+
+If a translation key doesn't exist for the current locale, the original text is returned, making it safe to use `trans` everywhere even if not all text is translated yet.
+
+---
+
+## Caching Mechanisms
+
+### Modular Caching
+
+"The cache is modular, allowing only parts of the template to be included in the cache"
+
+Neutral TS provides fine-grained control over caching at multiple levels.
+
+### Template-Level Caching
+
+Cache an entire template:
+
+```html
+{:cache; /120/ >>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Cached Page</title>
+</head>
+<body>
+  <!-- Content cached for 120 seconds -->
+</body>
+</html>
 :}
-{:include;
-    {:allow; valid-files >> {:;varname:} :}
-    {:else; error.ntpl :}
+```
+
+### Partial Caching
+
+Cache specific sections:
+
+```html
+<!DOCTYPE html>
+<html>
+<body>
+  {:cache; /3600/ >>
+    <nav><!-- Expensive navigation, cached for 1 hour --></nav>
+  :}
+  
+  <main><!-- Dynamic content --></main>
+  
+  {:cache; /600/ >>
+    <aside><!-- Sidebar, cached for 10 minutes --></aside>
+  :}
+</body>
+</html>
+```
+
+### Cache Exclusions
+
+"Or exclude parts of the cache, the previous example would be much better like this: {:cache; /120/ >> <!DOCTYPE html> <html>..."
+
+Use `!cache` to exclude sections from parent caches:
+
+```html
+{:cache; /120/ >>
+<!DOCTYPE html>
+<html>
+<body>
+  <div>Cached content</div>
+  {:!cache; {:date; %H:%M:%S :} :}
+  <div>More cached content</div>
+</body>
+</html>
 :}
 ```
 
-### Allow/Deny Lists
+The timestamp remains dynamic while surrounding content is cached.
 
-Note: `declare` must be defined in a file whose name contains the word "snippet". An error will occur if an attempt is made to define it elsewhere.
+### Cache Configuration
+
+Control caching behavior through configuration:
+
+```json
+{
+  "config": {
+    "cache_prefix": "myapp-neutral-cache",
+    "cache_dir": "/tmp/neutralts",
+    "cache_on_post": false,
+    "cache_on_get": true,
+    "cache_on_cookies": true,
+    "cache_disable": false
+  }
+}
+```
+
+---
+
+## Working with Data
+
+### JSON Data Types
+
+"The data is defined in a JSON: \"data\": { \"true\": true, \"false\": false, \"hello\": \"hello\", \"zero\": \"0\", \"one\": \"1\", \"spaces\": \" \", \"empty\": \"\", \"null\": null, \"emptyarr\": []..."
+
+Neutral TS handles all standard JSON types:
+
+- **Booleans**: true, false
+- **Strings**: Any text value
+- **Numbers**: Integer and floating-point
+- **Null**: The null value
+- **Arrays**: Ordered collections
+- **Objects**: Key-value pairs
+
+### Accessing Nested Data
+
+Use arrow syntax for nested structures:
 
 ```
-{:declare; allowed >>
-    word1
-    word2
-    *.ntpl
+{:;user->profile->address->city:}
+{:;settings->theme->colors->primary:}
+```
+
+### Iterating Over Collections
+
+The `each` BIF iterates over arrays and objects:
+
+```
+{:each; users key user >>
+  <div class="user">
+    <span>{:;key:}</span>: {:;user->name:}
+  </div>
 :}
-{:allow; allowed >> {:;varname:} :}
 ```
 
-Wildcards supported:
-- `.` - matches any character
-- `?` - matches exactly one character
-- `*` - matches zero or more characters
+### Type Checking
 
-Examples:
+Check if data is an array/object:
+
 ```
-<div>{:allow; templates >> file.txt :}{:else; fails :}</div>
-<div>{:allow; languages >> fr :}{:else; fails :}</div>
+{:array; items >>
+  <!-- items is an array/object -->
+  {:each; items key item >> ... :}
+:}{:else;
+  <!-- items is not an array -->
+  {:;items:}
+:}
+```
+
+### Coalescing Values
+
+Get the first non-empty value:
+
+```
+{:coalesce;
+  {:code; {:;user->nickname:} :}
+  {:code; {:;user->name:} :}
+  {:code; Anonymous :}
+:}
 ```
 
 ---
 
 ## Advanced Features
 
-### Caching
+### The Eval BIF
+
+{:eval; {:code; {:code; ... :} :} >> {:code; {:code; ... :} :} :}
+
+The `eval` BIF enables dynamic template generation and execution, allowing templates to build and evaluate other template code.
+
+### External Script Execution
+
+"This feature is experimental. Executes a external script (currently only Python) and processes its output. The script receives parameters and can access the template schema. ... {:obj; { \"engine\": \"Python\", \"file\": \"script.py\", \"params\": {}, \"callback\": \"main\", \"template\": \"template.ntpl\" } :}"
+
+The `obj` BIF allows executing external scripts:
 
 ```
-{:cache; /300/ >> content :}            # Cache for 300 seconds
-{:cache; /300/custom-id/ >> content :}  # Cache with custom ID
-{:!cache; content :}                    # Exclude from cache
+{:obj; {
+  "engine": "Python",
+  "file": "script.py",
+  "params": {"id": 123},
+  "callback": "main",
+  "template": "result.ntpl"
+} :}
 ```
 
-**Cache Example:**
-```
-{:cache; /120/ >>
-    <!DOCTYPE html>
-    <html>
-    <body>
-        <div>{:code; ... :}</div>
-        {:!cache; {:date; %H:%M:%S :} :}
-    </body>
-    </html>
-:}
-```
+This powerful feature enables:
+- Dynamic data fetching
+- Complex calculations
+- Integration with external services
+- Custom business logic
 
-If we run it a second later, the cache part will be the same for 120 seconds, while the `!cache` part is always updated.
+### Dynamic Snippet Names
 
-### Translations
+Build snippet names dynamically:
 
 ```
-{:trans; Hello :}                # Translate text
-{:!trans; Hello :}               # Translate or empty
-{:locale; translations.json :}   # Load translations
+{:snippet; option-foo >> Option A :}
+{:snippet; option-bar >> Option B :}
+{:snippet; option-baz >> Option C :}
+
+<!-- Call dynamically based on variable -->
+{:snippet; option-{:;selectedOption:} :}
 ```
 
-Translation schema:
-```json
-{
-    "inherit": {
-        "locale": {
-            "current": "en",
-            "trans": {
-                "en": { "Hello": "Hello" },
-                "es": { "Hello": "Hola" },
-                "de": { "Hello": "Hallo" },
-                "fr": { "Hello": "Bonjour" }
-            }
-        }
-    }
-}
-```
+"This is clearer and less computationally expensive: {:snippet; option-foo >> ... :} {:snippet; option-bar >> ... :} {:snippet; option-{:;varname:} :}"
 
-### Object Integration
+### Date Formatting
 
-`obj` allows you to execute scripts in other languages like Python:
+The `date` BIF formats dates:
 
 ```
-{:obj; 
-    {
-        "engine": "Python",
-        "file": "script.py",
-        "template": "template.ntpl"
-    } 
-:}
+{:date; %Y-%m-%d :}  <!-- 2026-02-13 -->
+{:date; %H:%M:%S :}  <!-- 14:30:45 -->
+{:date; %A, %B %d, %Y :}  <!-- Thursday, February 13, 2026 -->
 ```
 
 ---
 
-## Scope & Inheritance
+## Integration with Multiple Languages
 
-- Definitions are block-scoped, inherited by children, recovered on exit
-- `include` has block scope
-- `+` modifier promotes definitions to current/parent scope
+### Rust Integration
 
-### Scope Modifier (`+`)
-
-By default, definitions have block scope. `+` extends to current level:
-
-```
-{:code;
-    {:include; snippet.ntpl :}
-    {:snippet; name :}     # Not available outside
-:}
-{:snippet; name :}         # Not available
-
-{:+code;
-    {:include; snippet.ntpl :}
-    {:snippet; name :}     # Available outside
-:}
-{:snippet; name :}         # Still available
-```
-
----
-
-## HTTP Features
-
-### Exit/Redirect
-
-```
-{:exit; 404 :}                    # Exit with status
-{:!exit; 302 :}                   # Set status, continue
-{:exit; 301 >> /url :}            # Redirect
-{:redirect; 301 >> /url :}        # HTTP redirect
-{:redirect; js:reload:top :}      # JS redirect
-```
-
-### Fetch (AJAX)
-
-The system provides basic JavaScript for performing simple fetch requests:
-
-```
-{:fetch; |/url|auto| >> <div>loading...</div> :}
-{:fetch; |/url|click| >> <button>Load</button> :}
-{:fetch; |/url|form| >> ... :}
-```
-
-Events: `auto`, `none`, `click`, `visible`, `form`
-
----
-
-## Configuration Options
-
-```json
-{
-    "config": {
-        "comments": "remove",
-        "cache_prefix": "neutral-cache",
-        "cache_dir": "",
-        "cache_on_post": false,
-        "cache_on_get": true,
-        "cache_on_cookies": true,
-        "cache_disable": false,
-        "filter_all": false,
-        "disable_js": false,
-        "debug_expire": 3600,
-        "debug_file": ""
-    }
-}
-```
-
----
-
-## Quick Reference Table
-
-| BIF | Purpose |
-|-----|---------|
-| `{:;var:}` | Output variable |
-| `{:code; ... :}` | Code block |
-| `{:filled; v >> c :}` | Conditional (has content) |
-| `{:defined; v >> c :}` | Conditional (is defined) |
-| `{:bool; v >> c :}` | Conditional (is true) |
-| `{:array; v >> c :}` | Conditional (is array) |
-| `{:same; /a/b/ >> c :}` | String comparison |
-| `{:contains; /h/n/ >> c :}` | Substring check |
-| `{:each; arr k v >> c :}` | Loop through array |
-| `{:for; v 1..10 >> c :}` | For loop |
-| `{:include; file :}` | Include file |
-| `{:snippet; n >> c :}` | Define snippet |
-| `{:snippet; n :}` | Play snippet |
-| `{:trans; text :}` | Translate |
-| `{:cache; /t/ >> c :}` | Cache content |
-| `{:!cache; c :}` | Exclude from cache |
-| `{:coalesce; ... :}` | First non-empty |
-| `{:else; c :}` | Else condition |
-| `{:eval; c1 >> c2 :}` | Evaluate and output |
-| `{:param; n >> v :}` | Set parameter |
-| `{:allow; list >> val :}` | Whitelist check |
-| `{:declare; name >> list :}` | Define whitelist |
-| `{:exit; code :}` | HTTP status/exit |
-| `{:redirect; code >> url :}` | Redirect |
-| `{:fetch; \|url\|ev\| >> c :}` | AJAX request |
-| `{:join; /arr/sep/ :}` | Join array |
-| `{:moveto; tag >> c :}` | Move content to tag |
-| `{:date; format :}` | Output date |
-| `{:hash; text :}` | MD5 hash |
-| `{:rand; 1..10 :}` | Random number |
-| `{:sum; /a/b/ :}` | Sum values |
-| `{:replace; /f/t/ >> c :}` | String replace |
-| `{:count; ... :}` | Count (deprecated) |
-| `{:data; file.json :}` | Load local data |
-| `{:locale; file.json :}` | Load translations |
-| `{:debug; key :}` | Debug output |
-| `{:neutral; c :}` | No-parse output |
-| `{:obj; config :}` | Execute external script |
-| `{:; :}` | Unprintable (empty) |
-
----
-
-## Security Best Practices
-
-1. **Never trust context data** (GET, POST, COOKIES, ENV)
-2. **Use `CONTEXT`** for all user-provided data
-3. **Use `{:allow; ... :}`** for dynamic file inclusion
-4. **Use `filter_all: true`** for maximum safety
-5. **Validate variables** with `declare`/`allow` before evaluation
-6. **Remove debug** BIFs before production
-7. **Both application and templates** should implement security
-
-### Rust Foundation
-
-Neutral TS template engine is developed in Rust, one of the most secure programming languages. It does not have access to the application's data; it cannot do so because it is designed this way.
-
-### IPC Security Benefits
-
-The IPC architecture provides important security benefits: Sandboxed execution: Templates run in isolated processes. Reduced attack surface: Main application protected from template engine vulnerabilities. Resource control: Memory and CPU limits can be enforced at server level. Crash containment: Template engine failures don't affect the main application. Zero-downtime updates: IPC server can be updated independently without restarting client applications.
-
-### Data Isolation by Design
-
-By design the templates do not have access to arbitrary application data, the data has to be passed to the template in a JSON, then the data that you have not included in the JSON cannot be read by the template.
-
-### Security Summary
-
-| Security Feature | Description |
-|------------------|-------------|
-| **Sandboxed Execution** | Templates run in isolated processes |
-| **Reduced Attack Surface** | Main application protected from template vulnerabilities |
-| **Resource Control** | Memory and CPU limits enforceable at server level |
-| **Crash Containment** | Template failures don't affect main application |
-| **Data Isolation** | Templates only access explicitly passed JSON data |
-| **Rust Memory Safety** | Built with one of the most secure programming languages |
-
----
-
-## Truth Table
-
-| Variable | Value | filled | defined | bool | array |
-|----------|-------|--------|---------|------|-------|
-| true | true | ✅ | ✅ | ✅ | ❌ |
-| false | false | ✅ | ✅ | ❌ | ❌ |
-| "hello" | string | ✅ | ✅ | ✅ | ❌ |
-| "0" | string | ✅ | ✅ | ❌ | ❌ |
-| "1" | string | ✅ | ✅ | ✅ | ❌ |
-| " " | spaces | ✅ | ✅ | ✅ | ❌ |
-| "" | empty | ❌ | ✅ | ❌ | ❌ |
-| null | null | ❌ | ❌ | ❌ | ❌ |
-| undef | — | ❌ | ❌ | ❌ | ❌ |
-| [] | empty arr | ❌ | ✅ | ❌ | ✅ |
-| {...} | object | ✅ | ✅ | ✅ | ✅ |
-
----
-
-## Usage Examples
-
-### Basic Usage in Rust
+"In Rust it is enough with two methods, create the template with a file and a schema and then render: // Data let schema = json!({ \"data\": { \"hello\": \"Hello, World!\", \"site\": { \"name\": \"My Site\" } } }); // Create template // In file.ntpl use {:;hello:} and {:;site->name:} for show data. let template = Template::from_file_value(\"file.ntpl\", schema).unwrap(); // Render template let content = template.render();"
 
 ```rust
 use neutralts::Template;
 use serde_json::json;
 
-// Data
+// Create schema
 let schema = json!({
     "data": {
         "hello": "Hello, World!",
@@ -818,122 +883,423 @@ let schema = json!({
     }
 });
 
-// Create template
-// In file.ntpl use {:;hello:} and {:;site->name:} to show data
-let template = Template::from_file_value("file.ntpl", schema).unwrap();
-
-// Render template
-let content = template.render();
-
-// Status management
-let status_code = template.get_status_code();   // e.g.: 200
-let status_text = template.get_status_text();   // e.g.: OK
-let status_param = template.get_status_param(); // empty if no error
-```
-
-### Usage in Python (Native Package)
-
-```python
-from neutraltemplate import NeutralTemplate
-
-template = NeutralTemplate("file.ntpl", schema)
-contents = template.render()
-
-status_code = template.get_status_code()   # e.g.: 200
-status_text = template.get_status_text()   # e.g.: OK
-status_param = template.get_status_param()
-```
-
-### Usage in Python (IPC Client)
-
-Requires an IPC server and an IPC client:
-
-```python
-from NeutralIpcTemplate import NeutralIpcTemplate
-
-template = NeutralIpcTemplate("file.ntpl", schema)
-contents = template.render()
-
-status_code = template.get_status_code()   # e.g.: 200
-status_text = template.get_status_text()   # e.g.: OK
-status_param = template.get_status_param()
-```
-
-### Handling Redirections and Errors
-
-If you use the BIF "exit" or "redirect", it is necessary to manage the status codes in the application:
-
-```rust
+// Create and render template
 let template = Template::from_file_value("file.ntpl", schema).unwrap();
 let content = template.render();
-
-let status_code = template.get_status_code();   // e.g.: 301
-let status_text = template.get_status_text();   // e.g.: Moved Permanently
-let status_param = template.get_status_param(); // e.g.: https://example.com
-
-// Act accordingly according to your framework
 ```
+
+### Python Integration
+
+Using the neutraltemplate package:
+
+```python
+from neutraltemplate import Template
+
+schema = {
+    "data": {
+        "hello": "Hello, World!",
+        "site": {
+            "name": "My Site"
+        }
+    }
+}
+
+template = Template.from_file_value("file.ntpl", schema)
+content = template.render()
+```
+
+### PHP Integration
+
+```php
+<?php
+use NeutralTS\Template;
+
+$schema = [
+    "data" => [
+        "hello" => "Hello, World!",
+        "site" => [
+            "name" => "My Site"
+        ]
+    ]
+];
+
+$template = Template::fromFileValue("file.ntpl", $schema);
+$content = $template->render();
+```
+
+### Node.js Integration
+
+```javascript
+const { Template } = require('neutralts');
+
+const schema = {
+    data: {
+        hello: "Hello, World!",
+        site: {
+            name: "My Site"
+        }
+    }
+};
+
+const template = Template.fromFileValue("file.ntpl", schema);
+const content = template.render();
+```
+
+### Go Integration
+
+```go
+package main
+
+import (
+    "github.com/neutralts/client-go"
+)
+
+func main() {
+    schema := map[string]interface{}{
+        "data": map[string]interface{}{
+            "hello": "Hello, World!",
+            "site": map[string]interface{}{
+                "name": "My Site",
+            },
+        },
+    }
+    
+    template := neutralts.FromFileValue("file.ntpl", schema)
+    content := template.Render()
+}
+```
+
+### PWA Examples
+
+All PWA examples use the same template: Neutral templates.
+
+The official documentation includes Progressive Web App examples demonstrating how the same templates work across all supported languages.
+
+Examples for Rust, Python, PHP, Node.js and Go here: download. All PWA examples use the same template: Neutral templates.
+
+---
+
+## Best Practices
+
+### Template Organization
+
+1. **Use Snippets for Reusable Components**
+   ```
+   {:snippet; button >> <button class="{:;class:}">{:;text:}</button> :}
+   ```
+
+2. **Organize Templates by Feature**
+   ```
+   templates/
+   ├── layouts/
+   │   ├── base.ntpl
+   │   └── admin.ntpl
+   ├── components/
+   │   ├── header.ntpl
+   │   ├── footer.ntpl
+   │   └── nav.ntpl
+   └── pages/
+       ├── home.ntpl
+       └── about.ntpl
+   ```
+
+3. **Keep Business Logic Out of Templates**
+   Templates should display data, not compute it. Process data in your application before passing to templates.
+
+### Schema Design
+
+1. **Use Consistent Naming Conventions**
+   ```json
+   {
+     "data": {
+       "user_profile": { ... },
+       "site_settings": { ... },
+       "page_meta": { ... }
+     }
+   }
+   ```
+
+2. **Group Related Data**
+   ```json
+   {
+     "data": {
+       "navigation": {
+         "main_menu": [...],
+         "footer_links": [...]
+       }
+     }
+   }
+   ```
+
+3. **Include Only Necessary Data**
+   Don't pass entire database records; select only fields needed by the template.
+
+### Performance Optimization
+
+1. **Use Caching Wisely**
+   - Cache static content aggressively
+   - Use partial caching for mixed content
+   - Exclude truly dynamic elements
+
+2. **Minimize Nested Iterations**
+   Deeply nested loops can impact performance.
+
+3. **Preprocess Data**
+   Format dates, calculate totals, etc., before passing to templates.
+
+### Security Best Practices
+
+1. **Never Pass Sensitive Data Unnecessarily**
+   ```json
+   // DON'T
+   { "data": { "user": entireUserRecord } }
+   
+   // DO
+   { "data": { "user": { "name": user.name, "avatar": user.avatar } } }
+   ```
+
+2. **Validate Input Data**
+   Sanitize user-provided data before including in schemas.
+
+3. **Use Allow Lists**
+   Restrict which templates and resources can be accessed.
 
 ---
 
 ## Performance Considerations
 
-The IPC approach introduces performance overhead due to inter-process communication. The impact varies depending on factors... For most web applications, the security and interoperability benefits compensate for the performance overhead.
+### Native vs. IPC Mode
 
-### Easy Updates
+| Aspect | Native (Rust) | IPC |
+|--------|--------------|-----|
+| Latency | Minimal | Additional network hop |
+| Memory | Shared with application | Separate process |
+| Scaling | Application scaling | Independent scaling |
+| Updates | Requires rebuild | Hot-swappable |
 
-Easy updates: No application recompilation needed - simply update the IPC server for engine improvements.
+### Optimization Strategies
+
+1. **Connection Pooling**
+   Reuse IPC connections instead of creating new ones per request.
+
+2. **Template Precompilation**
+   If supported, precompile templates at startup.
+
+3. **Efficient Caching**
+   Implement multi-tier caching:
+   - In-memory cache for hot templates
+   - Disk cache for warm templates
+   - Redis/Memcached for distributed caching
+
+4. **Schema Optimization**
+   - Keep schemas small
+   - Avoid deeply nested structures
+   - Use references for repeated data
+
+### Benchmarking
+
+Measure performance in your specific environment:
+
+```rust
+use std::time::Instant;
+
+let start = Instant::now();
+for _ in 0..1000 {
+    let template = Template::from_file_value("test.ntpl", schema.clone()).unwrap();
+    let _ = template.render();
+}
+let duration = start.elapsed();
+println!("1000 renders: {:?}", duration);
+```
 
 ---
 
-## Conclusions
+## Comparison with Other Template Engines
 
-### Strengths
+### vs. Jinja2 (Python)
 
-1. **True Language-Agnostic**: Just like an SQL query returns the same data from any language, a Neutral TS template returns the same HTML from Python, PHP, Rust… with added security isolation.
+| Feature | Neutral TS | Jinja2 |
+|---------|-----------|--------|
+| Language Support | Multiple | Python only |
+| Syntax | BIF-based | Django-like |
+| Security | Process isolation | Sandboxed |
+| Learning Curve | Moderate | Low |
+| Ecosystem | Growing | Mature |
 
-2. **Security First**: Built in Rust with sandboxed execution, data isolation, and process containment.
+### vs. Blade (PHP)
 
-3. **Modularity**: Enables creating reusable plugins and snippet libraries that work across all supported languages.
+| Feature | Neutral TS | Blade |
+|---------|-----------|-------|
+| Language Support | Multiple | PHP only |
+| Framework Dependency | None | Laravel |
+| Compilation | Runtime | Compiled |
+| Extensibility | BIFs | Directives |
 
-4. **Flexible Caching**: Sophisticated modular caching with `!cache` blocks for dynamic content.
+### vs. Handlebars (JavaScript)
 
-5. **Built-in Localization**: Native support for multi-language applications through JSON-based translations.
+| Feature | Neutral TS | Handlebars |
+|---------|-----------|------------|
+| Language Support | Multiple | JS (with ports) |
+| Logic-less | No | Yes (mostly) |
+| Helpers | BIFs | Custom helpers |
+| Performance | Rust-speed | V8 speed |
 
-6. **Mature Design**: Originally developed in PHP and refined over years before being ported to Rust.
+### Unique Advantages of Neutral TS
 
-### Ideal Use Cases
-
-- Multi-language backend environments requiring consistent templating
-- Applications requiring high security through process isolation
-- Teams needing to share templates across different technology stacks
-- Projects requiring built-in internationalization support
-- PWA/Web APP development with modern frameworks like Actix Web
-
-### Trade-offs
-
-- IPC introduces some performance overhead (acceptable for most web applications)
-- Unique syntax requires learning curve for developers familiar with other template engines
-- Requires IPC server setup for non-Rust languages
-
-### Final Assessment
-
-Neutral TS represents an innovative approach to web templating by prioritizing language independence and security. Its database-like client-server architecture enables true template portability across programming languages while maintaining consistent output. The Rust foundation provides memory safety and performance, while the IPC architecture offers sandboxed execution that protects host applications from template engine vulnerabilities. For teams working in polyglot environments or requiring high security isolation, Neutral TS offers a compelling solution.
+1. **True Language Independence**: Same template, any backend
+2. **Consistent Output**: Guaranteed identical results
+3. **Security by Design**: Process isolation, explicit data passing
+4. **Modern Architecture**: Built for microservices and polyglot environments
+5. **Rust Performance**: Native Rust speed without the complexity
 
 ---
 
-## Links and Resources
+## Real-World Use Cases
 
-### Official Documentation
-- [Main Documentation](https://franbarinstance.github.io/neutralts-docs/docs/neutralts/)
-- [Syntax Documentation](https://franbarinstance.github.io/neutralts-docs/docs/neutralts/doc/)
-- [Rust API Documentation](https://docs.rs/neutralts/latest/neutralts/)
+### 1. Microservices Architecture
 
-### Repositories
-- [GitHub Repository](https://github.com/FranBarInstance/neutralts)
-- [Crates.io](https://crates.io/crates/neutralts)
+In a microservices environment with services written in different languages, Neutral TS allows sharing templates across all services:
 
-### Downloads
-- [IPC Server](https://github.com/FranBarInstance/neutral-ipc/releases) - Available from the repository releases
-- [IPC Clients](https://github.com/FranBarInstance/neutral-ipc/tree/master/clients) - Language-specific clients available at the repository
-- [Examples](https://github.com/FranBarInstance/neutralts-docs/tree/master/examples) - Rust, Python, PHP, Node.js, and Go examples
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Shared Templates                         │
+│                   (templates/*.ntpl)                        │
+└─────────────────────────────────────────────────────────────┘
+        │              │              │              │
+        ▼              ▼              ▼              ▼
+┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐
+│ User Service │ │ Product Svc  │ │ Order Service│ │ Admin Panel  │
+│   (Python)   │ │    (Go)      │ │    (Rust)    │ │    (PHP)     │
+└──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘
+        │              │              │              │
+        └──────────────┴──────────────┴──────────────┘
+                              │
+                              ▼
+                    ┌──────────────┐
+                    │ Neutral TS   │
+                    │ IPC Server   │
+                    └──────────────┘
+```
+
+### 2. Migration Projects
+
+When migrating from one technology stack to another, Neutral TS enables gradual migration:
+
+1. Convert templates to Neutral TS format
+2. Run both old and new systems using the same templates
+3. Migrate services one at a time
+4. Maintain visual consistency throughout
+
+### 3. Multi-Platform Products
+
+Build once, deploy everywhere:
+
+- Main web application (Rust/Actix)
+- Admin dashboard (Python/Django)  
+- Partner portal (PHP/Laravel)
+- All using identical templates
+
+### 4. Template Marketplace
+
+Thanks to this, and to its modular and parameterizable design, it is possible to create utilities or plugins that will work everywhere. For example, you can develop tools to create forms or form fields and create your own libraries of "snippets" for repetitive tasks.
+
+Create shareable template libraries:
+
+- Form component libraries
+- UI kit templates
+- Email templates
+- Report templates
+
+### 5. White-Label Solutions
+
+SaaS products with customizable themes benefit from:
+
+- Consistent theming across all integrations
+- Partner-customizable templates
+- Safe template execution
+
+---
+
+## Future Directions
+
+### Expanding Language Support
+
+The Neutral TS community continues to develop IPC clients for additional languages. The TCP/IP-based protocol makes it possible to add support for virtually any language capable of network communication.
+
+### Performance Improvements
+
+Ongoing optimization efforts include:
+- Template compilation and caching
+- Reduced serialization overhead
+- Connection pooling improvements
+- Parallel rendering capabilities
+
+### Enhanced Security Features
+
+Future versions may include:
+- Template signing and verification
+- Fine-grained permission controls
+- Audit logging
+- Content Security Policy integration
+
+### Developer Experience
+
+Improvements to tooling:
+- IDE/editor extensions with syntax highlighting
+- Template validation tools
+- Debugging capabilities
+- Performance profiling
+
+### Community Growth
+
+NeutralTS, Template system for the Web backend, language-agnostic via IPC/Package and natively as library/crate in Rust.
+
+The project continues to grow with:
+- Expanded documentation
+- More examples and tutorials
+- Community-contributed snippets and libraries
+- Integration guides for popular frameworks
+
+---
+
+## Conclusion
+
+Neutral TS represents a significant evolution in template engine technology. We're developing a new web template engine with a standout feature: it's language-agnostic. This means the same web template will work on any system and with any programming language.
+
+By addressing the fundamental challenge of template portability across programming languages, Neutral TS opens new possibilities for software architecture:
+
+1. **Freedom of Choice**: Choose the best language for each service without template constraints
+2. **Reduced Duplication**: Maintain one set of templates instead of multiple language-specific versions
+3. **Consistent User Experience**: Guarantee identical output across all services
+4. **Enhanced Security**: Benefit from process isolation and Rust's memory safety
+5. **Future-Proofing**: Migrate between technologies without rewriting templates
+
+The engine's architecture—built in Rust for performance and safety, accessible via IPC for universal compatibility—strikes an elegant balance between power and practicality. For most web applications, the security and interoperability benefits compensate for the performance overhead.
+
+Whether you're building a monolithic application in Rust or orchestrating a polyglot microservices architecture, Neutral TS provides a solid foundation for template management. Its BIF-based syntax, while requiring some initial learning, offers flexibility and power that simpler template engines cannot match.
+
+As web development continues to embrace diverse technology stacks and architectural patterns, tools like Neutral TS that bridge language boundaries will become increasingly valuable. The ability to share not just data and APIs, but also presentation logic, represents a meaningful step toward truly language-agnostic software development.
+
+For developers and organizations looking to streamline their template management, reduce duplication, and embrace polyglot architectures without sacrificing consistency, Neutral TS offers a compelling solution backed by modern engineering principles and an active community.
+
+---
+
+## Resources and References
+
+### Official Resources
+
+- **GitHub Repository**: https://github.com/FranBarInstance/neutralts
+- **Rust Crate**: https://crates.io/crates/neutralts
+- **Python Package**: https://pypi.org/project/neutraltemplate/
+- **Documentation**: https://franbarinstance.github.io/neutralts-docs/docs/neutralts/doc/
+- **IPC Server**: https://github.com/FranBarInstance/neutral-ipc
+- **IPC Clients**: https://github.com/FranBarInstance/neutral-ipc/tree/master/clients
+- **Examples**: https://github.com/FranBarInstance/neutralts-docs/tree/master/examples
+
+### License
+
+Neutral TS is released under the Apache License 2.0, allowing both personal and commercial use with proper attribution.
+
+---
+
+*This comprehensive guide provides a foundation for understanding and using Neutral TS. As the project evolves, consult the official documentation for the latest features and best practices.*
