@@ -1288,13 +1288,13 @@ For developers and organizations looking to streamline their template management
 
 ### Official Resources
 
-- **GitHub Repository**: https://github.com/FranBarInstance/neutralts
-- **Rust Crate**: https://crates.io/crates/neutralts
-- **Python Package**: https://pypi.org/project/neutraltemplate/
-- **Documentation**: https://franbarinstance.github.io/neutralts-docs/docs/neutralts/doc/
-- **IPC Server**: https://github.com/FranBarInstance/neutral-ipc
-- **IPC Clients**: https://github.com/FranBarInstance/neutral-ipc/tree/master/clients
-- **Examples**: https://github.com/FranBarInstance/neutralts-docs/tree/master/examples
+- **GitHub Repository**: [FranBarInstance/neutralts](https://github.com/FranBarInstance/neutralts)
+- **Rust Crate**: [neutralts on crates.io](https://crates.io/crates/neutralts)
+- **Python Package**: [neutraltemplate on PyPI](https://pypi.org/project/neutraltemplate/)
+- **Documentation**: [Neutral TS docs](https://franbarinstance.github.io/neutralts-docs/docs/neutralts/doc/)
+- **IPC Server**: [neutral-ipc](https://github.com/FranBarInstance/neutral-ipc)
+- **IPC Clients**: [neutral-ipc clients](https://github.com/FranBarInstance/neutral-ipc/tree/master/clients)
+- **Examples**: [Examples (neutralts-docs)](https://github.com/FranBarInstance/neutralts-docs/tree/master/examples)
 
 ### License
 
