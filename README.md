@@ -30,7 +30,7 @@
 
 In the ever-evolving landscape of web development, template engines have become indispensable tools for generating dynamic content. From simple variable interpolation to complex conditional rendering and iteration, template engines bridge the gap between raw data and polished HTML output. However, one persistent challenge has plagued developers across the industry: the fragmentation of template solutions across different programming languages and frameworks.
 
-Enter **Neutral TS**, a revolutionary template engine that dares to ask a fundamental question: *What if you could write a template once and use it everywhere, regardless of the programming language your backend employs?*
+Enter **[Neutral TS](https://github.com/FranBarInstance/neutralts)**, a revolutionary template engine that dares to ask a fundamental question: *What if you could write a template once and use it everywhere, regardless of the programming language your backend employs?*
 
 Neutral TS is a template engine for the Web, designed to work with any programming language (language-agnostic) via IPC/Package and natively as library/crate in Rust. This groundbreaking approach addresses a long-standing pain point in software development, where teams often find themselves maintaining multiple template implementations across different services written in various languages.
 
